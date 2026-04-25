@@ -90,6 +90,25 @@ export async function atualizarSessao(req, res) {
   }
 }
 
+// DELETE /sessoes/lote
+export async function eliminarVariasSessoes(req, res) {
+  try {
+    const { ids } = req.body
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'ids deve ser um array não vazio' })
+    }
+
+    const resultado = await prisma.sessao.deleteMany({
+      where: { id: { in: ids } },
+    })
+
+    res.json({ deletadas: resultado.count })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+}
+
 // DELETE /sessoes/:id
 export async function eliminarSessao(req, res) {
   try {

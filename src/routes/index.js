@@ -32,6 +32,7 @@ router.get("/sessoes", sessoes.listarSessoes);
 router.get("/sessoes/:id", sessoes.obterSessao);
 router.post("/sessoes", sessoes.criarSessao);
 router.patch("/sessoes/:id", sessoes.atualizarSessao);
+router.delete("/sessoes/lote", sessoes.eliminarVariasSessoes);
 router.delete("/sessoes/:id", sessoes.eliminarSessao);
 
 // Pagamentos
