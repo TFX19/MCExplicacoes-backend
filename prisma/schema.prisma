@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Materia {
+  id           String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nome         String         @unique
+  descricao    String?
+  ativo        Boolean        @default(true)
+  criadoEm     DateTime       @default(now()) @map("criado_em") @db.Timestamptz
+  sessoes      Sessao[]
+  alunoMaterias AlunoMateria[]
+
+  @@map("materias")
+}
+
+model Aluno {
+  id             String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nome           String
+  email          String         @unique
+  telemovel      String?
+  anoEscolar     String?        @map("ano_escolar")
+  escola         String?
+  notasInternas  String?        @map("notas_internas")
+  ativo          Boolean        @default(true)
+  criadoEm       DateTime       @default(now()) @map("criado_em") @db.Timestamptz
+  atualizadoEm   DateTime       @default(now()) @map("atualizado_em") @db.Timestamptz
+  sessoes        Sessao[]
+  pagamentos     Pagamento[]
+  materias       AlunoMateria[]
+  inscricoes     Inscricao[]
+
+  @@map("alunos")
+}
+
+model Inscricao {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  nome        String
+  email       String
+  telemovel   String?
+  anoEscolar  String?   @map("ano_escolar")
+  escola      String?
+  materiasIds String[]  @map("materias_ids") @db.Uuid
+  mensagem    String?
+  estado      String    @default("pendente")
+  alunoId     String?   @map("aluno_id") @db.Uuid
+  aluno       Aluno?    @relation(fields: [alunoId], references: [id])
+  criadoEm   DateTime   @default(now()) @map("criado_em") @db.Timestamptz
+
+  @@map("inscricoes")
+}
+
+model Sessao {
+  id          String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  alunoId     String      @map("aluno_id") @db.Uuid
+  materiaId   String      @map("materia_id") @db.Uuid
+  dataHora    DateTime    @map("data_hora") @db.Timestamptz
+  duracaoMin  Int         @default(60) @map("duracao_min")
+  local       String?     @default("online")
+  estado      String      @default("agendada")
+  notas       String?
+  criadoEm    DateTime    @default(now()) @map("criado_em") @db.Timestamptz
+  atualizadoEm DateTime   @default(now()) @map("atualizado_em") @db.Timestamptz
+  aluno       Aluno       @relation(fields: [alunoId], references: [id])
+  materia     Materia     @relation(fields: [materiaId], references: [id])
+  pagamentos  Pagamento[]
+
+  @@map("sessoes")
+}
+
+model Pagamento {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  alunoId        String    @map("aluno_id") @db.Uuid
+  sessaoId       String?   @map("sessao_id") @db.Uuid
+  valor          Decimal   @db.Decimal(8, 2)
+  moeda          String    @default("EUR")
+  metodo         String?   @default("transferencia")
+  estado         String    @default("pendente")
+  dataPagamento  DateTime? @map("data_pagamento") @db.Date
+  descricao      String?
+  criadoEm       DateTime  @default(now()) @map("criado_em") @db.Timestamptz
+  aluno          Aluno     @relation(fields: [alunoId], references: [id])
+  sessao         Sessao?   @relation(fields: [sessaoId], references: [id])
+
+  @@map("pagamentos")
+}
+
+model AlunoMateria {
+  alunoId    String  @map("aluno_id") @db.Uuid
+  materiaId  String  @map("materia_id") @db.Uuid
+  aluno      Aluno   @relation(fields: [alunoId], references: [id])
+  materia    Materia @relation(fields: [materiaId], references: [id])
+
+  @@id([alunoId, materiaId])
+  @@map("aluno_materias")
+}
