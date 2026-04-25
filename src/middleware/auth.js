@@ -1,19 +1,32 @@
-import jwt from 'jsonwebtoken'
+import { createClient } from "@supabase/supabase-js";
 
-export function requireAuth(req, res, next) {
-  const authHeader = req.headers.authorization
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+);
 
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token em falta' })
+export async function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Token em falta" });
   }
 
-  const token = authHeader.split(' ')[1]
+  const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    req.user = decoded
-    next()
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({ error: "Token inválido ou expirado" });
+    }
+
+    req.user = user;
+    next();
   } catch {
-    return res.status(401).json({ error: 'Token inválido ou expirado' })
+    return res.status(401).json({ error: "Erro de autenticação" });
   }
 }
