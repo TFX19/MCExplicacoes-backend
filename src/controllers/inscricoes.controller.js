@@ -75,7 +75,7 @@ export async function converterInscricao(req, res) {
     if (!inscricao)
       return res.status(404).json({ error: "Inscrição não encontrada" });
 
-    // Cria o aluno e liga à inscrição numa transação
+    // Cria o aluno e remove a inscrição numa transação
     const [aluno] = await prisma.$transaction([
       prisma.aluno.create({
         data: {
@@ -91,17 +91,10 @@ export async function converterInscricao(req, res) {
           },
         },
       }),
-      prisma.inscricao.update({
+      prisma.inscricao.delete({
         where: { id: req.params.id },
-        data: { estado: "convertido" },
       }),
     ]);
-
-    // Associa o aluno criado à inscrição
-    await prisma.inscricao.update({
-      where: { id: req.params.id },
-      data: { alunoId: aluno.id },
-    });
 
     res.status(201).json(aluno);
   } catch (err) {
